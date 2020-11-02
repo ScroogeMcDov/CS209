@@ -9,9 +9,9 @@
 // need a method "next child" to traverse from child to child
 // Array.from(nodelist) converts a node list into an array.
 
-let maxHeight;
-let maxWidth;
-let tableElements;
+let maxHeight; // maximum height of table
+let maxWidth; // maximum width of table
+let tableElements;  // contains the entire table structure and its cells in a 3d array. [[row1cells], [row2cells],..]
 
 function makeTable(rows, cols) {
     maxHeight = cols;
@@ -53,6 +53,8 @@ function makeTable(rows, cols) {
     tableElements = rowsAndColumns; // the populated list.
 }
 
+
+// === Cell Style Changers ===
 function unmarkCell(cell) {
     cell.style.backgroundColor = 'white';
     cell.id -= 'm';
@@ -61,19 +63,27 @@ function markCell(cell) {
     cell.style.backgroundColor = 'yellow';
     cell.id += 'm';
 }
-
 function unboldCell(cell) {
     cell.style.border = "1px solid black";
 }
-
 function boldCell(cell) {
     cell.style.border = "3px solid black";
 }
+function setButtonStyle(button) {
+    button.style.height = '50px';
+    button.style.width = '50px';
+    button.style.fontSize = '30px';
+    button.style.left = '300px';
+}
+
 function getCurrentCellCoord(cell) {
     return (parseInt(cell.id.charAt(0))) + ', ' + (parseInt(cell.id.charAt(3)));
 }
 
-// returns whether a move to the next coord is still in-bounds.
+/* returns whether a move to the next coord is still in-bounds.
+arg: cell - current cell
+arg: direction - desired direction to move in
+*/
 function safeToMove(cell, direction) {
     for (let i = 0; i < tableElements.length; i++) {
         for (let j = 0; j < tableElements[i].length; j++) {
@@ -98,6 +108,7 @@ function safeToMove(cell, direction) {
     return 'safeToMove error';
 }
 
+// === Cell Controls ===
 function moveCellUp(currentCell) {
     if (safeToMove(currentCell, 'u')) {
         unboldCell(currentCell);
@@ -107,7 +118,6 @@ function moveCellUp(currentCell) {
         return newCell;
     }
 }
-
 function moveCellDown(currentCell) {
     if (safeToMove(currentCell, 'd')) {
         unboldCell(currentCell);
@@ -117,7 +127,6 @@ function moveCellDown(currentCell) {
         return newCell;
     }
 }
-
 function moveCellLeft(currentCell) {
     if (safeToMove(currentCell, 'l')) {
         unboldCell(currentCell);
@@ -127,7 +136,6 @@ function moveCellLeft(currentCell) {
         return newCell;
     }
 }
-
 function moveCellRight(currentCell) {
     if (safeToMove(currentCell, 'r')) {
         unboldCell(currentCell);
@@ -138,6 +146,8 @@ function moveCellRight(currentCell) {
     }
 }
 
+/*Creates all the buttons and adds them to the tree.
+*/
 function makeButtons() {
     let markCell = document.createElement('button');
     markCell.id = 'markCell';
@@ -164,13 +174,6 @@ function makeButtons() {
     document.body.appendChild(rightArrow);
     document.body.appendChild(leftArrow);
     document.body.appendChild(markCell);
-}
-
-function setButtonStyle(button) {
-    button.style.height = '50px';
-    button.style.width = '50px';
-    button.style.fontSize = '30px';
-    button.style.left = '300px';
 }
 
 function isButtonSelected (button) {
