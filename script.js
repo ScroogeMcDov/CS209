@@ -2,6 +2,10 @@
 let maxHeight; // maximum height of table
 let maxWidth; // maximum width of table
 let tableElements;  // contains the entire table structure and its cells in a 3d array. [[row1cells], [row2cells],..]
+let selectedCoordinates = {
+    x: 1,
+    y: 1
+};
 
 function makeTable(rows, cols) {
     maxHeight = cols;
@@ -29,9 +33,8 @@ function makeTable(rows, cols) {
             let col = document.createElement('td');
             col.style.border = "1px solid black";
             col.id = i + ', ' + j;
-            if (i == 1 && j == 1) {
+            if (i === 1 && j === 1) {
                 col.style.border = "3px solid black";
-                col.id += "c"; // this is the current cell (index = 4)
             }
             col.appendChild(document.createTextNode(i + ", " + j));
             row.appendChild(col);
@@ -45,13 +48,17 @@ function makeTable(rows, cols) {
 
 
 // === Cell Style Changers ===
-function unmarkCell(cell) {
-    cell.style.backgroundColor = 'white';
-    cell.id -= 'm';
+function unmarkCell(coordinates) {
+    let currentCell = getCell(coordinates.x, coordinates.y);
+    currentCell.style.backgroundColor = 'white';
 }
-function markCell(cell) {
-    cell.style.backgroundColor = 'yellow';
-    cell.id += 'm';
+function markCell(coordinates) {
+    let currentCell = getCell(coordinates.x, coordinates.y);
+    currentCell.style.backgroundColor = 'yellow';
+}
+function isMarked(coordinates) {
+    let currentCell = getCell(coordinates.x, coordinates.y);
+    return currentCell.style.backgroundColor == 'yellow';
 }
 function unboldCell(cell) {
     cell.style.border = "1px solid black";
@@ -66,133 +73,129 @@ function setButtonStyle(button) {
     button.style.left = '300px';
 }
 
-function getCurrentCellCoord(cell) {
-    return (parseInt(cell.id.charAt(0))) + ', ' + (parseInt(cell.id.charAt(3)));
+// Returns cell with x, y coords.
+function getCell(x, y) {
+    return document.getElementById(x + ', ' + y);
 }
 
 /* returns whether a move to the next coord is still in-bounds.
-arg: cell - current cell
-arg: direction - desired direction to move in
+
 */
-function safeToMove(cell, direction) {
-    for (let i = 0; i < tableElements.length; i++) {
-        for (let j = 0; j < tableElements[i].length; j++) {
-            if (tableElements[i][j] === cell && direction === 'r') {
-                let nextRightIndex = (j + 1);
-                return (nextRightIndex < tableElements[i].length);
-            }
-            if (tableElements[i][j] === cell && direction === 'l') {
-                let nextLeftIndex = (j - 1);
-                return nextLeftIndex > 0;
-            }
-            if (tableElements[i][j] === cell && direction === 'u') {
-                let nextUpIndex = (i - 1);
-                return (nextUpIndex > 0);
-            }
-            if (tableElements[i][j] === cell && direction === 'd') {
-                let nextDownIndex = (i - 1);
-                return (nextDownIndex < tableElements[j].length);
-            }
-        }
-    }
-    return 'safeToMove error';
+function safeToMove(targetPosition) {
+    return (targetPosition.x > 0 && targetPosition.x < 4 && targetPosition.y > 0 && targetPosition.y <= 4);
 }
 
-// === Cell Controls (Note: functions return the destination cell object) ===
-function moveCellUp(currentCell) {
-    if (safeToMove(currentCell, 'u')) {
-        unboldCell(currentCell);
-        let nextCell = (parseInt(currentCell.id.charAt(0)) - 1) + ', ' + (parseInt(currentCell.id.charAt(3)));
-        let newCell = document.getElementById(nextCell);
-        boldCell(newCell);
-        return newCell;
+// === Cell Controls ===
+function updateSelectedCoordinates(targetPosition) {
+    unboldCell(getCell(selectedCoordinates.x, selectedCoordinates.y));
+    boldCell(getCell(targetPosition.x, targetPosition.y));
+    selectedCoordinates = targetPosition;
+}
+
+function moveCellUp() {
+    let targetPosition = {
+        x: selectedCoordinates.x - 1,
+        y: selectedCoordinates.y
+    };
+
+    if (safeToMove(targetPosition)) {
+        updateSelectedCoordinates(targetPosition);
     }
 }
-function moveCellDown(currentCell) {
-    if (safeToMove(currentCell, 'd')) {
-        unboldCell(currentCell);
-        let nextCell = (parseInt(currentCell.id.charAt(0)) + 1) + ', ' + (parseInt(currentCell.id.charAt(3)));
-        let newCell = document.getElementById(nextCell);
-        boldCell(newCell);
-        return newCell;
+function moveCellDown() {
+    let targetPosition = {
+        x: selectedCoordinates.x + 1,
+        y: selectedCoordinates.y
+    };
+    if (safeToMove(targetPosition)) {
+        updateSelectedCoordinates(targetPosition);
     }
 }
-function moveCellLeft(currentCell) {
-    if (safeToMove(currentCell, 'l')) {
-        unboldCell(currentCell);
-        let nextCell = (parseInt(currentCell.id.charAt(0)) + ', ' + (parseInt(currentCell.id.charAt(3))) - 1);
-        let newCell = document.getElementById(nextCell);
-        boldCell(newCell);
-        return newCell;
+function moveCellLeft() {
+    let targetPosition = {
+        x: selectedCoordinates.x,
+        y: selectedCoordinates.y - 1
+    };
+    if (safeToMove(targetPosition)) {
+        updateSelectedCoordinates(targetPosition);
     }
 }
-function moveCellRight(currentCell) {
-    if (safeToMove(currentCell, 'r')) {
-        unboldCell(currentCell);
-        let nextCell = (parseInt(currentCell.id.charAt(0)) + ', ' + (parseInt(currentCell.id.charAt(3)) + 1));
-        let newCell = document.getElementById(nextCell);
-        boldCell(newCell);
-        return newCell;
+function moveCellRight() {
+    let targetPosition = {
+        x: selectedCoordinates.x,
+        y: selectedCoordinates.y + 1
+    };
+    if (safeToMove(targetPosition)) {
+        updateSelectedCoordinates(targetPosition);
     }
 }
 
 /*Creates all the buttons and adds them to the tree.
 */
-function makeButtons() {
-    let markCell = document.createElement('button');
-    markCell.id = 'markCell';
-    markCell.appendChild(document.createTextNode('Mark Cell'));
+function generateButtons() {
+    let markCellButton = document.createElement('button');
+    markCellButton.id = 'markCell';
+    markCellButton.appendChild(document.createTextNode('Mark Cell'));
+    markCellButton.onclick = function () {
+        if (!isMarked(selectedCoordinates)) {
+            markCell(selectedCoordinates);
+        }
+        else {
+            unmarkCell(selectedCoordinates);
+        }
+    }
+    markCellButton.style.width = '100%';
 
     let upArrow = document.createElement('button');
     upArrow.id = 'upArrow';
     upArrow.appendChild(document.createTextNode('↑'));
+    upArrow.onclick = function () {
+        moveCellUp();
+    }
+    upArrow.style.width = '33%'
 
     let downArrow = document.createElement('button');
     downArrow.id = 'downArrow';
     downArrow.appendChild(document.createTextNode('↓'));
+    downArrow.onclick = function () {
+        moveCellDown();
+    }
+    downArrow.style.width = '33%'
 
     let rightArrow = document.createElement('button');
     rightArrow.id = 'rightArrow';
     rightArrow.appendChild(document.createTextNode('→'));
+    rightArrow.onclick = function () {
+        moveCellRight();
+    }
+    rightArrow.style.width = '33%'
 
     let leftArrow = document.createElement('button');
     leftArrow.id = 'leftArrow';
     leftArrow.appendChild(document.createTextNode('←'));
-
-    document.body.appendChild(upArrow);
-    document.body.appendChild(downArrow);
-    document.body.appendChild(rightArrow);
-    document.body.appendChild(leftArrow);
-    document.body.appendChild(markCell);
-}
-
-function isButtonSelected (button) {
-    return button.id === 'marked';
-}
-
-function updateCells(cellArray) {
-    for (let cell of cellArray) {
-        if (cell.id !== 'marked') {
-            cell.style.backgroundColor = 'white';
-        }
+    leftArrow.onclick = function () {
+        moveCellLeft();
     }
-}
+    leftArrow.style.width = '33%'
 
+    let buttonLayout = document.createElement('div');
+    buttonLayout.style.width = '100px';
+    buttonLayout.style.textAlign = 'center';
+
+
+    buttonLayout.appendChild(upArrow);
+    buttonLayout.appendChild(document.createElement('br'));
+    buttonLayout.appendChild(leftArrow);
+    buttonLayout.appendChild(downArrow);
+    buttonLayout.appendChild(rightArrow);
+
+    buttonLayout.appendChild(markCellButton);
+
+    document.body.appendChild(buttonLayout);
+}
 
 // === MAIN PART OF FILE ===
 // 1. setting up table.
 let table = makeTable(4, 4);
+generateButtons();
 
-// 2. setting up buttons..
-for (button of document.body.getElementsByTagName('button')) {
-    setButtonStyle(button);
-}
-markCell(document.body.getElementsByTagName('td')[0]); // highights
-updateCells(document.body.getElementsByTagName('td'));
-
-// 3. move cell (newCell returns the next cell object, which we can then call 'moveCell*Direction* on).
-let newCell1 = moveCellRight(document.body.getElementsByTagName('td')[0]);
-markCell(newCell1)
-let newCell2 = moveCellRight(newCell1);
-markCell(newCell2)
-unmarkCell(newCell1);
