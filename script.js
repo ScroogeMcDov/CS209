@@ -53,12 +53,9 @@ function makeTable(rows, cols) {
     tableElements = rowsAndColumns; // the populated list.
 }
 
-function getCurrentCell() {
-    return document.getElementById('current cell');
-}
-
 function unmarkCell(cell) {
     cell.style.backgroundColor = 'white';
+    cell.id -= 'm';
 }
 function markCell(cell) {
     cell.style.backgroundColor = 'yellow';
@@ -72,17 +69,6 @@ function unboldCell(cell) {
 function boldCell(cell) {
     cell.style.border = "3px solid black";
 }
-
-function moveCellDown(currentCell) {
-    if (currentCell.textContent.charAt(0) < maxWidth && currentCell.textContent.charAt(3) < maxHeight) {
-        // move cell up:
-        unboldCell(currentCell);
-        let nextCell = (parseInt(currentCell.id.charAt(0)) + 1) + ', ' + (parseInt(currentCell.id.charAt(3)));
-        let newCell = document.getElementById(nextCell);
-        boldCell(newCell);
-    }
-}
-
 function getCurrentCellCoord(cell) {
     return (parseInt(cell.id.charAt(0))) + ', ' + (parseInt(cell.id.charAt(3)));
 }
@@ -93,11 +79,11 @@ function safeToMove(cell, direction) {
         for (let j = 0; j < tableElements[i].length; j++) {
             if (tableElements[i][j] === cell && direction === 'r') {
                 let nextRightIndex = (j + 1);
-                return (nextRightIndex > tableElements[i].length);
+                return (nextRightIndex < tableElements[i].length);
             }
             if (tableElements[i][j] === cell && direction === 'l') {
                 let nextLeftIndex = (j - 1);
-                return (nextLeftIndex < 0);
+                return nextLeftIndex > 0;
             }
             if (tableElements[i][j] === cell && direction === 'u') {
                 let nextUpIndex = (i - 1);
@@ -109,27 +95,58 @@ function safeToMove(cell, direction) {
             }
         }
     }
+    return 'safeToMove error';
 }
 
-
-
 function moveCellUp(currentCell) {
+    if (safeToMove(currentCell, 'u')) {
+        unboldCell(currentCell);
+        let nextCell = (parseInt(currentCell.id.charAt(0)) - 1) + ', ' + (parseInt(currentCell.id.charAt(3)));
+        let newCell = document.getElementById(nextCell);
+        boldCell(newCell);
+        return newCell;
+    }
+}
 
+function moveCellDown(currentCell) {
+    if (safeToMove(currentCell, 'd')) {
+        unboldCell(currentCell);
+        let nextCell = (parseInt(currentCell.id.charAt(0)) + 1) + ', ' + (parseInt(currentCell.id.charAt(3)));
+        let newCell = document.getElementById(nextCell);
+        boldCell(newCell);
+        return newCell;
+    }
+}
+
+function moveCellLeft(currentCell) {
+    if (safeToMove(currentCell, 'l')) {
+        unboldCell(currentCell);
+        let nextCell = (parseInt(currentCell.id.charAt(0)) + ', ' + (parseInt(currentCell.id.charAt(3))) - 1);
+        let newCell = document.getElementById(nextCell);
+        boldCell(newCell);
+        return newCell;
+    }
+}
+
+function moveCellRight(currentCell) {
+    if (safeToMove(currentCell, 'r')) {
+        unboldCell(currentCell);
+        let nextCell = (parseInt(currentCell.id.charAt(0)) + ', ' + (parseInt(currentCell.id.charAt(3)) + 1));
+        let newCell = document.getElementById(nextCell);
+        boldCell(newCell);
+        return newCell;
+    }
 }
 
 function makeButtons() {
     let markCell = document.createElement('button');
     markCell.id = 'markCell';
     markCell.appendChild(document.createTextNode('Mark Cell'));
-    markCell.addEventListener('click', () => {
-        // to do
-    });
+
     let upArrow = document.createElement('button');
     upArrow.id = 'upArrow';
     upArrow.appendChild(document.createTextNode('↑'));
-    upArrow.addEventListener('click', () => {
-        // to do
-    });
+
     let downArrow = document.createElement('button');
     downArrow.id = 'downArrow';
     downArrow.appendChild(document.createTextNode('↓'));
@@ -160,10 +177,6 @@ function isButtonSelected (button) {
     return button.id === 'marked';
 }
 
-// function moveCell(cell) {
-//     if (cell.direction == '')
-// }
-
 function updateCells(cellArray) {
     for (let cell of cellArray) {
         if (cell.id !== 'marked') {
@@ -175,11 +188,18 @@ function updateCells(cellArray) {
 
 // === MAIN PART OF FILE ===
 // 1. setting up table.
-
 let table = makeTable(4, 4);
+
 // 2. setting up buttons..
-for (button of document.body.getElementsByTagName('button')) {setButtonStyle(button);}
-markCell(document.body.getElementsByTagName('td')[0])
-console.log(safeToMove(document.body.getElementsByTagName('td')[0], 'u'));
-// moveCellUp(document.body.getElementsByTagName('td')[0]);
+for (button of document.body.getElementsByTagName('button')) {
+    setButtonStyle(button);
+}
+markCell(document.body.getElementsByTagName('td')[0]); // highights
 updateCells(document.body.getElementsByTagName('td'));
+
+// 3. move cell (newCell returns the next cell object, which we can then call 'moveCell*Direction* on).
+let newCell1 = moveCellRight(document.body.getElementsByTagName('td')[0]);
+markCell(newCell1)
+let newCell2 = moveCellRight(newCell1);
+markCell(newCell2)
+unmarkCell(newCell1);
